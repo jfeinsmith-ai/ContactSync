@@ -7,6 +7,8 @@
 - The scan and final result report how many source-only duplicate contacts and
   groups were intentionally retained for later cleanup.
 - Existing TO-account collision rules remain unchanged.
+- Completed real-device acceptance verification, including a 2,002-contact
+  bulk copy and eventual Google Contacts web visibility after account sync.
 
 ## 0.1.1 - 2026-09-25
 

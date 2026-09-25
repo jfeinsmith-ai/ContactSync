@@ -147,6 +147,22 @@ IMPLEMENTATION AND TESTING
 - Provide a buildable project, README, test results, and an explicit
   list of anything not verified on a real two-account device.
 
+VERIFICATION RECORD
+
+- Version 0.2.0 is fully verified for the acceptance scenario on a real Android
+  device with two Google accounts.
+- The disposable-contact flow verified account selection, read-only Scan,
+  name-only review, exact-account local creation, rerun behavior, and eventual
+  visibility in Google Contacts on the web.
+- A bulk run created 2,002 contacts locally under the selected TO account with
+  no app-reported write failures. All copied contacts subsequently appeared in
+  Google Contacts after Android-to-Google synchronization completed.
+- Large Google account syncs can take time. A successful local account
+  verification must continue to be reported separately from server visibility;
+  sync delay is not a local write failure.
+- Source-only duplicates are intentionally retained and reported under the
+  version 0.2.0 rule above.
+
 Implement a working small vertical slice first, then the bulk scan,
 collision rules, and robust rerun behavior. Do not call a mocked test
 an end-to-end verification of Google sync.

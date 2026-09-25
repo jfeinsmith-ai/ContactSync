@@ -56,7 +56,9 @@ Requirements: Android Studio with JDK 17 and Android SDK 35.
 ```
 
 The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk` and is
-ignored by Git. Unit tests use synthetic `example.test` identities only.
+ignored by Git. Unit tests use synthetic `example.test` identities only. The
+verified v0.2.0 APK is available from the
+[GitHub release](https://github.com/jfeinsmith-ai/ContactSync/releases/tag/v0.2.0).
 
 ## Device safety check
 
@@ -68,12 +70,22 @@ synced it; verify the TO account separately at
 
 ## Verification status
 
-- Automated JVM collision/copy-safety tests: implemented and passing.
-- Android debug build: implemented and passing.
-- Real device with two Google accounts: **not run in this development
-  environment**.
-- Account-scoped insertion and Google server sync: **not verified on a real
-  device**. The app reports only that a raw contact was saved and verified
-  locally under the TO account.
+- **v0.2.0 is fully verified for the acceptance scenario.**
+- Automated JVM collision/copy-safety suite: 21 tests passing.
+- Android lint: 0 errors. Debug and release builds pass.
+- Real Android device with two Google accounts: verified.
+- Disposable-contact scan, name-only review, exact-account targeting, copy, and
+  rerun behavior: verified.
+- Bulk run: 2,002 contacts created locally under the selected TO account with no
+  app-reported write failures.
+- Google Contacts web verification: all copied contacts became visible after
+  Android-to-Google synchronization completed. For a large run, server
+  visibility can lag successful on-device creation.
+- Source-only duplicate retention and completion reporting: verified as the
+  intended v0.2.0 behavior.
+
+“Created on device” remains intentionally distinct from “visible on Google’s
+servers”: the first is verified immediately by ContactSync, while the second
+depends on Android’s Google account sync finishing.
 
 Development is specification-driven. See [ContactSync Spec.md](ContactSync%20Spec.md).
