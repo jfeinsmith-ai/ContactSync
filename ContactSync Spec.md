@@ -63,10 +63,12 @@ original field values.
    but neither email nor LinkedIn matches, pause only that source
    contact for user review.
 4. NO MATCH: Automatically queue the FROM contact for creation.
-5. Within-run collisions: Apply the same checks between source
-   candidates so duplicate-looking source records are not copied twice.
-   An email or LinkedIn match skips the later candidate. A name-only
-   match goes to review.
+5. Within-run source duplicates: If no corresponding collision existed in the
+   TO account at Scan, copy every source record, including duplicate-looking
+   records. Do not turn source-only duplicates into review items or suppress
+   later candidates. Report the retained source-only duplicate count after the
+   copy so the user can clean them up later. During copying, allow collisions
+   caused solely by contacts created earlier in that same run.
 6. If email and LinkedIn point to different existing TO contacts, or
    there are other contradictory identifiers, skip automatically as an
    ambiguous collision and report its count. Do not create, merge, or

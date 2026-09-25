@@ -159,6 +159,10 @@ class MainActivity : Activity() {
             appendLine("Existing contacts skipped by email: ${plan.emailSkipped.size}")
             appendLine("Existing contacts skipped by LinkedIn URL: ${plan.linkedInSkipped.size}")
             appendLine("Name-only clashes requiring review: ${plan.nameClashes.size}")
+            appendLine(
+                "Source-only duplicates retained: ${plan.sourceDuplicates.contactCount} " +
+                    "in ${plan.sourceDuplicates.groupCount} groups",
+            )
             appendLine("Ambiguous identifier collisions skipped: ${plan.ambiguousSkipped.size}")
             appendLine("Records without usable identity skipped: ${plan.unusableSkipped.size}")
             append("Read errors: ${plan.readErrors}")
@@ -227,7 +231,7 @@ class MainActivity : Activity() {
                 }
             }
             main.post {
-                result.onSuccess { showOutcome(it, prepared.to) }
+                result.onSuccess { showOutcome(it, prepared) }
                     .onFailure {
                         status.text = when (it) {
                             is StalePlanException -> it.message.orEmpty()
@@ -243,14 +247,26 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showOutcome(outcome: CopyOutcome, to: AccountRef) {
+    private fun showOutcome(outcome: CopyOutcome, prepared: PreparedRun) {
         status.text = buildString {
             appendLine(if (outcome.cancelled) "Copy cancelled between contacts." else "Copy finished.")
             appendLine("Created on device: ${outcome.created}")
             appendLine("Already present when rechecked: ${outcome.alreadyPresent}")
             appendLine("Failed: ${outcome.failed}")
+            prepared.plan.sourceDuplicates.takeIf { it.contactCount > 0 }?.let { duplicates ->
+                val disposition = if (
+                    !outcome.cancelled && outcome.fatalMessage == null && outcome.failed == 0
+                ) "copied" else "planned"
+                appendLine(
+                    "Source-only duplicates $disposition: ${duplicates.contactCount} contacts " +
+                        "in ${duplicates.groupCount} groups. Clean them up in the TO account later if desired.",
+                )
+            }
             outcome.fatalMessage?.let { appendLine("Stopped: $it") }
-            append("Verify Google sync manually: open contacts.google.com for ${to.name} and confirm the new contacts appear.")
+            append(
+                "Verify Google sync manually: open contacts.google.com for ${prepared.to.name} " +
+                    "and confirm the new contacts appear.",
+            )
         }
     }
 

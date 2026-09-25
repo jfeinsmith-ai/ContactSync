@@ -55,14 +55,16 @@ class CollisionPlannerTest {
         )
     }
 
-    @Test fun `within-run email and name collisions use earlier candidates`() {
+    @Test fun `source-only email and name duplicates all remain ready`() {
         val first = contact(1, "Ada", "Lovelace", email = "ada@example.test")
         val emailDuplicate = contact(2, "Other", "Person", email = "ADA@example.test")
         val nameDuplicate = contact(3, "ada", "lovelace", email = "other@example.test")
         val plan = planner.plan(listOf(first, emailDuplicate, nameDuplicate), emptyList())
-        assertEquals(listOf(first), plan.ready)
-        assertEquals(listOf(emailDuplicate), plan.emailSkipped)
-        assertEquals(listOf(nameDuplicate), plan.nameClashes.map { it.source })
+        assertEquals(listOf(first, emailDuplicate, nameDuplicate), plan.ready)
+        assertTrue(plan.emailSkipped.isEmpty())
+        assertTrue(plan.nameClashes.isEmpty())
+        assertEquals(3, plan.sourceDuplicates.contactCount)
+        assertEquals(1, plan.sourceDuplicates.groupCount)
     }
 
     @Test fun `repeated plan skips a previously inserted contact`() {
@@ -95,4 +97,3 @@ class CollisionPlannerTest {
         websites = linkedIn?.let { listOf(LabeledValue(it, 1)) }.orEmpty(),
     )
 }
-

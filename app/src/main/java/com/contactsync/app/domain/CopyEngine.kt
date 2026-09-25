@@ -72,6 +72,7 @@ class CopyEngine(
         var created = 0
         var alreadyPresent = 0
         var failed = 0
+        val createdDestinationIds = mutableSetOf<Long>()
 
         selected.forEachIndexed { index, contact ->
             if (isCancelled()) {
@@ -88,34 +89,39 @@ class CopyEngine(
             }
             val collision = planner.collision(contact, current)
             val mayCreateDespiteName = contact in approvedNameClashes
-            when (collision.kind) {
-                CollisionKind.EMAIL, CollisionKind.LINKEDIN -> {
+            val collisionOnlyWithThisRun = collision.matches.isNotEmpty() &&
+                collision.matches.all { match ->
+                    match.rawContactId?.let(createdDestinationIds::contains) == true
+                }
+            when {
+                collisionOnlyWithThisRun -> Unit
+                collision.kind == CollisionKind.EMAIL || collision.kind == CollisionKind.LINKEDIN -> {
                     alreadyPresent++
                     onProgress(index + 1, selected.size)
                     return@forEachIndexed
                 }
-                CollisionKind.AMBIGUOUS -> {
+                collision.kind == CollisionKind.AMBIGUOUS -> {
                     failed++
                     onProgress(index + 1, selected.size)
                     return@forEachIndexed
                 }
-                CollisionKind.NAME_ONLY -> if (!mayCreateDespiteName) {
+                collision.kind == CollisionKind.NAME_ONLY && !mayCreateDespiteName -> {
                     return CopyOutcome(
                         selected.size, created, alreadyPresent, failed, cancelled = false,
                         fatalMessage = "A new name collision appeared. Scan again before continuing.",
                     )
                 }
-                CollisionKind.UNUSABLE -> {
+                collision.kind == CollisionKind.UNUSABLE -> {
                     failed++
                     onProgress(index + 1, selected.size)
                     return@forEachIndexed
                 }
-                CollisionKind.NONE -> Unit
+                else -> Unit
             }
-
             try {
                 val destinationId = store.insert(run.to, contact)
                 created++
+                createdDestinationIds += destinationId
                 store.recordMapping(run.from, contact.rawContactId, run.to, destinationId)
             } catch (error: AccountTargetingException) {
                 return CopyOutcome(
@@ -148,4 +154,3 @@ class CopyEngine(
 }
 
 private fun Throwable.safeMessage(): String = message?.take(200) ?: javaClass.simpleName
-

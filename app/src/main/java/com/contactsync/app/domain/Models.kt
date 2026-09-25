@@ -37,6 +37,11 @@ data class NameClash(
     var decision: ClashDecision = ClashDecision.SKIP,
 )
 
+data class SourceDuplicateSummary(
+    val contactCount: Int = 0,
+    val groupCount: Int = 0,
+)
+
 data class ScanPlan(
     val sourceScanned: Int,
     val ready: List<ContactRecord>,
@@ -45,6 +50,7 @@ data class ScanPlan(
     val ambiguousSkipped: List<ContactRecord>,
     val unusableSkipped: List<ContactRecord>,
     val nameClashes: List<NameClash>,
+    val sourceDuplicates: SourceDuplicateSummary = SourceDuplicateSummary(),
     val readErrors: Int = 0,
 ) {
     val selectedForCopy: List<ContactRecord>
@@ -59,4 +65,3 @@ data class CollisionResult(
     val kind: CollisionKind,
     val matches: List<ContactRecord> = emptyList(),
 )
-

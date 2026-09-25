@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 - 2026-09-25
+
+- Source-only duplicate-looking contacts are all copied when the TO account had
+  no corresponding collision at Scan.
+- The scan and final result report how many source-only duplicate contacts and
+  groups were intentionally retained for later cleanup.
+- Existing TO-account collision rules remain unchanged.
+
 ## 0.1.1 - 2026-09-25
 
 - Fixed scanning on Contacts Provider implementations whose Data view does not

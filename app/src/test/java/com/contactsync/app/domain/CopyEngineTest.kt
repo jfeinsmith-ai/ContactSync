@@ -55,6 +55,23 @@ class CopyEngineTest {
         assertEquals(1, store.destination.size)
     }
 
+    @Test fun `source-only duplicates are all inserted in one run`() {
+        val duplicate = contact(1, email = "duplicate@example.test")
+        val store = FakeStore(
+            source = listOf(duplicate, duplicate.copy(rawContactId = 2)),
+            destination = emptyList(),
+        )
+        val engine = CopyEngine(store)
+        val run = engine.scan(from, to)
+        assertEquals(2, run.plan.selectedForCopy.size)
+        assertEquals(2, run.plan.sourceDuplicates.contactCount)
+
+        val result = engine.copy(run, from, to, { false })
+        assertEquals(2, result.created)
+        assertEquals(0, result.alreadyPresent)
+        assertEquals(2, store.destination.size)
+    }
+
     @Test fun `account targeting failure stops the run`() {
         val store = FakeStore(source = listOf(contact(1)), destination = emptyList(), targetFailure = true)
         val engine = CopyEngine(store)
@@ -107,4 +124,3 @@ class CopyEngineTest {
         }
     }
 }
-

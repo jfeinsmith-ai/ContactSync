@@ -18,7 +18,7 @@ class CollisionPlanner {
         val unusableSkipped = mutableListOf<ContactRecord>()
         val clashes = mutableListOf<NameClash>()
 
-        source.forEachIndexed { position, contact ->
+        source.forEach { contact ->
             when (val collision = index.collision(contact)) {
                 is CollisionResult -> when (collision.kind) {
                     CollisionKind.UNUSABLE -> unusableSkipped += contact
@@ -28,13 +28,6 @@ class CollisionPlanner {
                     CollisionKind.NAME_ONLY -> clashes += NameClash(contact, collision.matches)
                     CollisionKind.NONE -> ready += contact
                 }
-            }
-            if (contact.hasUsableIdentity() &&
-                contact !in emailSkipped &&
-                contact !in linkedInSkipped &&
-                contact !in ambiguousSkipped
-            ) {
-                index.add("s:$position:${contact.rawContactId}", contact)
             }
         }
 
@@ -46,6 +39,7 @@ class CollisionPlanner {
             ambiguousSkipped = ambiguousSkipped,
             unusableSkipped = unusableSkipped,
             nameClashes = clashes,
+            sourceDuplicates = detectSourceDuplicates(ready),
             readErrors = readErrors,
         )
     }
@@ -103,6 +97,43 @@ class CollisionPlanner {
     }
 }
 
+internal fun detectSourceDuplicates(contacts: List<ContactRecord>): SourceDuplicateSummary {
+    if (contacts.size < 2) return SourceDuplicateSummary()
+    val parents = IntArray(contacts.size) { it }
+
+    fun root(index: Int): Int {
+        var current = index
+        while (parents[current] != current) {
+            parents[current] = parents[parents[current]]
+            current = parents[current]
+        }
+        return current
+    }
+
+    fun union(left: Int, right: Int) {
+        val leftRoot = root(left)
+        val rightRoot = root(right)
+        if (leftRoot != rightRoot) parents[rightRoot] = leftRoot
+    }
+
+    val firstByKey = mutableMapOf<String, Int>()
+    contacts.forEachIndexed { index, contact ->
+        val keys = buildSet {
+            contact.normalizedEmails().forEach { add("email:$it") }
+            contact.normalizedLinkedIn().forEach { add("linkedin:$it") }
+            contact.normalizedName()?.let { add("name:$it") }
+        }
+        keys.forEach { key ->
+            firstByKey.putIfAbsent(key, index)?.let { previous -> union(index, previous) }
+        }
+    }
+    val duplicateGroups = contacts.indices.groupBy(::root).values.filter { it.size > 1 }
+    return SourceDuplicateSummary(
+        contactCount = duplicateGroups.sumOf(List<Int>::size),
+        groupCount = duplicateGroups.size,
+    )
+}
+
 fun ContactRecord.normalizedEmails(): Set<String> =
     emails.mapNotNullTo(linkedSetOf()) { Normalizers.email(it.value) }
 
@@ -113,4 +144,3 @@ fun ContactRecord.normalizedName(): String? = Normalizers.structuredName(givenNa
 
 fun ContactRecord.hasUsableIdentity(): Boolean =
     normalizedName() != null || normalizedEmails().isNotEmpty() || normalizedLinkedIn().isNotEmpty()
-

@@ -9,7 +9,7 @@ automatic schedule, or Internet permission.
 
 1. Select distinct FROM and TO Google accounts.
 2. Scan without writing anything.
-3. Automatically skip email and LinkedIn profile matches.
+3. Automatically skip email and LinkedIn profile matches already in TO.
 4. Review only structured first-and-last-name clashes (default: Skip).
 5. Confirm both full account addresses and the exact number of contacts.
 6. Copy one raw contact at a time with account verification and between-contact
@@ -19,6 +19,10 @@ Every scan rebuilds the destination index from current account-scoped raw
 contacts. Immediately before copying, ContactSync rejects stale plans; before
 each insert it rechecks the current destination. Inserts use a single atomic
 `applyBatch` and explicitly target the selected TO account.
+
+Duplicate-looking contacts that exist only within FROM are all copied. The scan
+and final result report the number of retained source-only duplicate records and
+groups so they can be cleaned up later in TO.
 
 ## Privacy and permissions
 
@@ -38,7 +42,7 @@ ContactSync copies the original structured given/family names, all email
 addresses, all phone numbers, and all website rows. Available Android type and
 custom-label values are preserved. Display names are never split or guessed.
 
-Version 0.1.1 does **not** copy middle names, prefixes/suffixes, phonetic names,
+Version 0.2.0 does **not** copy middle names, prefixes/suffixes, phonetic names,
 nicknames, organizations, postal addresses, events, notes, relationships,
 IM/SIP fields, photos, group memberships, custom MIME rows, or sync-adapter
 metadata. It never merges, updates, deletes, or reverse-syncs contacts.
