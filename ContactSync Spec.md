@@ -192,5 +192,5 @@ Manage this project with Git from the start.
   fails, report the failure accurately; do not claim the work is on
   GitHub until the push succeeds.
 
-Do not interpret permission to manage Git as permission to publish
-my contact data or make the repository public.
+Do not interpret permission to manage Git or publish the public repository as
+permission to publish my contact data.

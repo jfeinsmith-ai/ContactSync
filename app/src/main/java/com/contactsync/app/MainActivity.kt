@@ -1,6 +1,7 @@
 package com.contactsync.app
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.pm.PackageManager
@@ -35,6 +36,7 @@ import com.contactsync.app.domain.StalePlanException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
+@SuppressLint("SetTextI18n") // Version 1 UI is intentionally English-only; values are built from live scan data.
 class MainActivity : Activity() {
     private lateinit var store: AndroidContactStore
     private lateinit var engine: CopyEngine
@@ -408,4 +410,3 @@ class MainActivity : Activity() {
         )
     }
 }
-

@@ -26,6 +26,25 @@ class AndroidContactStore(private val context: Context) : ContactStore {
     override fun read(account: AccountRef): ReadResult {
         val builders = linkedMapOf<Long, ContactBuilder>()
         var rowErrors = 0
+        val accountSelection = "${ContactsContract.RawContacts.ACCOUNT_NAME}=? AND " +
+            "${ContactsContract.RawContacts.ACCOUNT_TYPE}=? AND " +
+            "${ContactsContract.RawContacts.DELETED}=0"
+        val accountArgs = arrayOf(account.name, account.type)
+
+        // Seed every account-owned raw contact, including records with no Data rows.
+        resolver.query(
+            ContactsContract.RawContacts.CONTENT_URI,
+            arrayOf(ContactsContract.RawContacts._ID),
+            accountSelection,
+            accountArgs,
+            ContactsContract.RawContacts._ID,
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(0)
+                builders[id] = ContactBuilder(id)
+            }
+        } ?: throw IllegalStateException("Contacts Provider returned no raw-contact cursor for ${account.name}")
+
         val projection = arrayOf(
             ContactsContract.Data.RAW_CONTACT_ID,
             ContactsContract.Data.MIMETYPE,
@@ -33,14 +52,11 @@ class AndroidContactStore(private val context: Context) : ContactStore {
             ContactsContract.Data.DATA2,
             ContactsContract.Data.DATA3,
         )
-        val selection = "${ContactsContract.RawContacts.ACCOUNT_NAME}=? AND " +
-            "${ContactsContract.RawContacts.ACCOUNT_TYPE}=? AND " +
-            "${ContactsContract.RawContacts.DELETED}=0"
         resolver.query(
             ContactsContract.Data.CONTENT_URI,
             projection,
-            selection,
-            arrayOf(account.name, account.type),
+            accountSelection,
+            accountArgs,
             ContactsContract.Data.RAW_CONTACT_ID,
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID)
@@ -180,4 +196,3 @@ class AndroidContactStore(private val context: Context) : ContactStore {
         const val GOOGLE_ACCOUNT_TYPE = "com.google"
     }
 }
-
