@@ -1,0 +1,50 @@
+# Android/Gradle generated files
+.gradle/
+build/
+**/build/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material and secrets
+*.jks
+*.keystore
+keystore.properties
+*.properties.local
+.env
+.env.*
+
+# Contact data is PII. Never track project-local contact payloads, caches,
+# exports, databases, backups, or run logs, regardless of format.
+contact-data/
+contacts-data/
+payloads/
+local-payloads/
+exports/
+backups/
+run-logs/
+logs/
+cache/
+caches/
+*.vcf
+*.vcard
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.contacts.json
+*.contacts.csv
+*.contacts.tsv
+contact*.json
+contact*.csv
+contact*.tsv
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
