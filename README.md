@@ -38,7 +38,7 @@ ContactSync copies the original structured given/family names, all email
 addresses, all phone numbers, and all website rows. Available Android type and
 custom-label values are preserved. Display names are never split or guessed.
 
-Version 0.1.0 does **not** copy middle names, prefixes/suffixes, phonetic names,
+Version 0.1.1 does **not** copy middle names, prefixes/suffixes, phonetic names,
 nicknames, organizations, postal addresses, events, notes, relationships,
 IM/SIP fields, photos, group memberships, custom MIME rows, or sync-adapter
 metadata. It never merges, updates, deletes, or reverse-syncs contacts.

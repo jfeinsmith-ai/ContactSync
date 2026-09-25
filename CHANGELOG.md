@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 - 2026-09-25
+
+- Fixed scanning on Contacts Provider implementations whose Data view does not
+  expose the RawContacts `deleted` column.
+- Data rows are now loaded only for previously verified, non-deleted,
+  account-owned raw-contact IDs in bounded batches.
+
 ## 0.1.0 - 2026-09-25
 
 - Added account-scoped scanning for Google raw contacts and supported Data rows.
@@ -8,4 +15,3 @@
 - Added atomic per-contact writes, post-write account verification, stale-plan
   rejection, rerun recovery, and local mapping hints.
 - Added synthetic unit tests, privacy-safe Git exclusions, and device checklist.
-

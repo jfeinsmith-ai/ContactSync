@@ -52,42 +52,44 @@ class AndroidContactStore(private val context: Context) : ContactStore {
             ContactsContract.Data.DATA2,
             ContactsContract.Data.DATA3,
         )
-        resolver.query(
-            ContactsContract.Data.CONTENT_URI,
-            projection,
-            accountSelection,
-            accountArgs,
-            ContactsContract.Data.RAW_CONTACT_ID,
-        )?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID)
-            val mimeColumn = cursor.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE)
-            val data1 = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA1)
-            val data2 = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA2)
-            val data3 = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA3)
-            while (cursor.moveToNext()) {
-                try {
-                    val id = cursor.getLong(idColumn)
-                    val builder = builders.getOrPut(id) { ContactBuilder(id) }
-                    val value = cursor.stringOrNull(data1)
-                    val type = if (cursor.isNull(data2)) 0 else cursor.getInt(data2)
-                    val label = cursor.stringOrNull(data3)
-                    when (cursor.getString(mimeColumn)) {
-                        ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE -> {
-                            builder.givenName = cursor.stringOrNull(data2)
-                            builder.familyName = cursor.stringOrNull(data3)
+        builders.keys.chunked(DATA_QUERY_BATCH_SIZE).forEach { rawContactIds ->
+            resolver.query(
+                ContactsContract.Data.CONTENT_URI,
+                projection,
+                rawContactDataSelection(rawContactIds.size),
+                rawContactIds.map(Long::toString).toTypedArray(),
+                ContactsContract.Data.RAW_CONTACT_ID,
+            )?.use { cursor ->
+                val idColumn = cursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID)
+                val mimeColumn = cursor.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE)
+                val data1 = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA1)
+                val data2 = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA2)
+                val data3 = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA3)
+                while (cursor.moveToNext()) {
+                    try {
+                        val id = cursor.getLong(idColumn)
+                        val builder = builders[id] ?: continue
+                        val value = cursor.stringOrNull(data1)
+                        val type = if (cursor.isNull(data2)) 0 else cursor.getInt(data2)
+                        val label = cursor.stringOrNull(data3)
+                        when (cursor.getString(mimeColumn)) {
+                            ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE -> {
+                                builder.givenName = cursor.stringOrNull(data2)
+                                builder.familyName = cursor.stringOrNull(data3)
+                            }
+                            ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE ->
+                                value?.let { builder.emails += LabeledValue(it, type, label) }
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE ->
+                                value?.let { builder.phones += LabeledValue(it, type, label) }
+                            ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE ->
+                                value?.let { builder.websites += LabeledValue(it, type, label) }
                         }
-                        ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE ->
-                            value?.let { builder.emails += LabeledValue(it, type, label) }
-                        ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE ->
-                            value?.let { builder.phones += LabeledValue(it, type, label) }
-                        ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE ->
-                            value?.let { builder.websites += LabeledValue(it, type, label) }
+                    } catch (_: RuntimeException) {
+                        rowErrors++
                     }
-                } catch (_: RuntimeException) {
-                    rowErrors++
                 }
-            }
-        } ?: throw IllegalStateException("Contacts Provider returned no cursor for ${account.name}")
+            } ?: throw IllegalStateException("Contacts Provider returned no Data cursor for ${account.name}")
+        }
         return ReadResult(builders.values.map(ContactBuilder::build), rowErrors)
     }
 
@@ -194,5 +196,6 @@ class AndroidContactStore(private val context: Context) : ContactStore {
 
     companion object {
         const val GOOGLE_ACCOUNT_TYPE = "com.google"
+        private const val DATA_QUERY_BATCH_SIZE = 800
     }
 }
